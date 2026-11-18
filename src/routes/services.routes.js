@@ -72,7 +72,7 @@ router.get('/services', async (req, res, next) => {
 
     const docs = await cursor.toArray();
     res.vary('Origin');
-    res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       count: docs.length,
@@ -108,7 +108,7 @@ router.get('/services/categories', async (_req, res, next) => {
     }));
 
     res.vary('Origin');
-    res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       categories,

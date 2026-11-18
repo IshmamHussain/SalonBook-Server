@@ -30,7 +30,7 @@ cd SalonBook-Server
 npm install
 ```
 
-Create a `.env` file in `server/` based on `.env.example`.
+Create a `.env` file in the project root based on `.env.example`.
 
 ## How to Run the Project Locally
 
@@ -53,7 +53,7 @@ stripe listen --forward-to http://localhost:5000/api/payments/webhook
 
 ## Required Environment Variables
 
-Configure these variable names in `.env` (never commit actual secret values):
+Add the following variables to `.env`:
 
 - `PORT`
 - `NODE_ENV`

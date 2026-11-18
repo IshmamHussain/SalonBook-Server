@@ -9,6 +9,7 @@ const router = Router();
  */
 router.get('/token', async (req, res, next) => {
   try {
+    res.set('Cache-Control', 'no-store');
     const userDoc = await getSessionUserFromRequest(req);
     if (!userDoc) {
       return res.status(401).json({

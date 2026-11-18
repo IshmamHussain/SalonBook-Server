@@ -91,6 +91,50 @@ const SEED_SERVICES = [
       'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=1200&q=80',
     status: 'active',
   },
+  {
+    serviceName: 'Editorial Blowout & Velvet Wave Styling',
+    category: 'Haircut & Styling',
+    description:
+      'Volume-lifted round-brush blowout and soft cinema waves locked in with weightless thermal botanical mist for multi-day polish.',
+    price: 75,
+    duration: 45,
+    image:
+      'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
+  {
+    serviceName: 'Botanical Scalp Detox & Steam Therapy',
+    category: 'Hair Treatment',
+    description:
+      'Micro-exfoliating rosemary scalp renewal paired with warm ozone micro-mist, pressure-point massage, and clarifying camellia tonic.',
+    price: 110,
+    duration: 60,
+    image:
+      'https://images.unsplash.com/photo-1522337094846-8a818192de1f?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
+  {
+    serviceName: 'Hydra-Glow Vitamin C & Peptide Facial',
+    category: 'Facial & Skincare',
+    description:
+      'Deep aqua-infusion cleansing followed by stabilized vitamin C serum, cooling peptide hydrogel mask, and barrier-sealing botanical mist.',
+    price: 155,
+    duration: 75,
+    image:
+      'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
+  {
+    serviceName: 'Botanical Spa Pedicure & Warm Paraffin Ritual',
+    category: 'Manicure & Pedicure',
+    description:
+      'Mineral soak, gentle volcanic pumice smoothing, restorative warm paraffin wrap, cuticle care, and long-wear lacquer or bare buffer shine.',
+    price: 90,
+    duration: 65,
+    image:
+      'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
 ];
 
 async function seed() {
