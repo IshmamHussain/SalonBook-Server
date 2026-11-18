@@ -22,7 +22,10 @@ export async function connectToDatabase() {
   await client.connect();
   database = client.db(env.mongodbDbName);
 
-  await ensureIndexes(database);
+  // Skip blocking index creation on Vercel serverless cold starts (indexes are created by seed.js / local startup)
+  if (!process.env.VERCEL) {
+    await ensureIndexes(database);
+  }
 
   return { client, db: database };
 }
@@ -51,7 +54,7 @@ export function getCollections() {
   };
 }
 
-async function ensureIndexes(db) {
+export async function ensureIndexes(db) {
   await Promise.all([
     db.collection('services').createIndexes([
       { key: { status: 1, category: 1, price: 1 }, name: 'services_status_category_price' },

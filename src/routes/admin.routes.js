@@ -5,19 +5,31 @@ import { parseObjectId, toggleBlockUserSchema, validateBody } from '../utils/val
 
 const router = Router();
 
-// Customer Dashboard Overview
+// Customer Dashboard Overview (single aggregation round-trip)
 router.get('/dashboard/customer/overview', verifyJWT, requireRole('customer'), async (req, res, next) => {
   try {
     const { appointments } = getCollections();
     const customerId = req.user.objectId;
 
-    const [totalRequests, pendingCount, confirmedCount, cancelledCount] = await Promise.all([
-      appointments.countDocuments({ customerId }),
-      appointments.countDocuments({ customerId, status: 'pending' }),
-      appointments.countDocuments({ customerId, status: 'confirmed' }),
-      appointments.countDocuments({ customerId, status: 'cancelled' }),
-    ]);
+    const grouped = await appointments
+      .aggregate([
+        { $match: { customerId } },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray();
 
+    const counts = new Map(grouped.map((g) => [g._id, g.count]));
+    const pendingCount = counts.get('pending') || 0;
+    const confirmedCount = counts.get('confirmed') || 0;
+    const cancelledCount = counts.get('cancelled') || 0;
+    const totalRequests = pendingCount + confirmedCount + cancelledCount;
+
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       overview: {
@@ -32,40 +44,46 @@ router.get('/dashboard/customer/overview', verifyJWT, requireRole('customer'), a
   }
 });
 
-// Admin Dashboard Overview
+// Admin Dashboard Overview (consolidated parallel queries)
 router.get('/dashboard/admin/overview', verifyJWT, requireRole('admin'), async (_req, res, next) => {
   try {
     const { users, services, appointments, transactions } = getCollections();
 
-    const [
-      totalCustomers,
-      totalActiveServices,
-      totalAppointments,
-      pendingAppointments,
-      confirmedAppointments,
-      paidTransactionsSummary,
-    ] = await Promise.all([
-      users.countDocuments({ role: { $ne: 'admin' } }),
-      services.countDocuments({ status: 'active' }),
-      appointments.countDocuments({}),
-      appointments.countDocuments({ status: 'pending' }),
-      appointments.countDocuments({ status: 'confirmed' }),
-      transactions
-        .aggregate([
-          { $match: { status: 'paid' } },
-          {
-            $group: {
-              _id: null,
-              count: { $sum: 1 },
-              totalRevenue: { $sum: '$amount' },
+    const [totalCustomers, totalActiveServices, appointmentGroups, paidTransactionsSummary] =
+      await Promise.all([
+        users.countDocuments({ role: { $ne: 'admin' } }),
+        services.countDocuments({ status: 'active' }),
+        appointments
+          .aggregate([
+            {
+              $group: {
+                _id: '$status',
+                count: { $sum: 1 },
+              },
             },
-          },
-        ])
-        .toArray(),
-    ]);
+          ])
+          .toArray(),
+        transactions
+          .aggregate([
+            { $match: { status: 'paid' } },
+            {
+              $group: {
+                _id: null,
+                count: { $sum: 1 },
+                totalRevenue: { $sum: '$amount' },
+              },
+            },
+          ])
+          .toArray(),
+      ]);
 
+    const apptCounts = new Map(appointmentGroups.map((g) => [g._id, g.count]));
+    const pendingAppointments = apptCounts.get('pending') || 0;
+    const confirmedAppointments = apptCounts.get('confirmed') || 0;
+    const totalAppointments = appointmentGroups.reduce((sum, g) => sum + g.count, 0);
     const paymentSummary = paidTransactionsSummary[0] || { count: 0, totalRevenue: 0 };
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       overview: {
@@ -115,6 +133,7 @@ router.get('/admin/users', verifyJWT, requireRole('admin'), async (_req, res, ne
       ])
       .toArray();
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       users: docs.map((u) => ({
@@ -241,6 +260,7 @@ router.get('/admin/transactions', verifyJWT, requireRole('admin'), async (_req, 
       ])
       .toArray();
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       transactions: docs.map((t) => ({

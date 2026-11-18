@@ -41,6 +41,7 @@ router.get('/appointments/booked-slots', verifyJWT, async (req, res, next) => {
       )
       .toArray();
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       date,
@@ -189,6 +190,7 @@ router.get('/appointments/my', verifyJWT, requireRole('customer'), async (req, r
       ])
       .toArray();
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       appointments: docs.map((d) => ({
@@ -243,7 +245,7 @@ router.patch('/appointments/:id/cancel', verifyJWT, requireRole('customer'), asy
     const updated = await appointments.findOneAndUpdate(
       { _id: appointmentObjectId, customerId: req.user.objectId, status: 'pending' },
       { $set: { status: 'cancelled' } },
-      { returnDocument: 'after' }
+      { returnDocument: 'after', projection: { status: 1 } }
     );
 
     if (!updated) {
@@ -319,6 +321,7 @@ router.get('/admin/appointments', verifyJWT, requireRole('admin'), async (req, r
       ])
       .toArray();
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       appointments: docs.map((d) => ({

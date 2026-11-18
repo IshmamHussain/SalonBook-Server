@@ -1,5 +1,5 @@
 import { initAuth } from './config/auth.js';
-import { closeDatabase, connectToDatabase, getCollections } from './config/db.js';
+import { closeDatabase, connectToDatabase, ensureIndexes, getCollections } from './config/db.js';
 import { assertRequiredEnv, env } from './config/env.js';
 
 const SEED_SERVICES = [
@@ -96,6 +96,7 @@ const SEED_SERVICES = [
 async function seed() {
   assertRequiredEnv();
   const { client, db } = await connectToDatabase();
+  await ensureIndexes(db);
   const auth = initAuth(db, client);
   const { users, services } = getCollections();
 

@@ -63,6 +63,7 @@ router.get('/services', async (req, res, next) => {
     }
 
     const docs = await cursor.toArray();
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
     return res.status(200).json({
       success: true,
       count: docs.length,
@@ -97,6 +98,7 @@ router.get('/services/categories', async (_req, res, next) => {
       minPrice: countMap.get(name)?.minPrice || null,
     }));
 
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
     return res.status(200).json({
       success: true,
       categories,
@@ -134,6 +136,7 @@ router.get('/services/:id', verifyJWT, async (req, res, next) => {
       });
     }
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       service: serializeService(doc),
@@ -165,6 +168,7 @@ router.get('/admin/services', verifyJWT, requireRole('admin'), async (req, res, 
     if (sort === 'price_desc') sortSpec = { price: -1, createdAt: -1 };
 
     const docs = await services.find(filter, { projection: SERVICE_PROJECTION }).sort(sortSpec).toArray();
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       count: docs.length,

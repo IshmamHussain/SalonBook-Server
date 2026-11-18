@@ -131,10 +131,23 @@ router.post(
       }
 
       const { appointments, services } = getCollections();
-      const appointment = await appointments.findOne({
-        _id: appointmentObjectId,
-        customerId: req.user.objectId,
-      });
+      const appointment = await appointments.findOne(
+        {
+          _id: appointmentObjectId,
+          customerId: req.user.objectId,
+        },
+        {
+          projection: {
+            _id: 1,
+            serviceId: 1,
+            appointmentDate: 1,
+            timeSlot: 1,
+            servicePrice: 1,
+            status: 1,
+            paymentStatus: 1,
+          },
+        }
+      );
 
       if (!appointment) {
         return res.status(404).json({ success: false, message: 'Appointment not found.' });
@@ -209,10 +222,24 @@ router.get('/session/:sessionId', verifyJWT, requireRole('customer'), async (req
     }
 
     const { transactions, appointments, services } = getCollections();
-    const tx = await transactions.findOne({
-      stripeSessionId: sessionId,
-      customerId: req.user.objectId,
-    });
+    res.set('Cache-Control', 'no-store');
+    const tx = await transactions.findOne(
+      {
+        stripeSessionId: sessionId,
+        customerId: req.user.objectId,
+      },
+      {
+        projection: {
+          _id: 1,
+          appointmentId: 1,
+          amount: 1,
+          currency: 1,
+          stripeSessionId: 1,
+          status: 1,
+          createdAt: 1,
+        },
+      }
+    );
 
     if (!tx) {
       return res.status(200).json({
@@ -222,7 +249,10 @@ router.get('/session/:sessionId', verifyJWT, requireRole('customer'), async (req
       });
     }
 
-    const appointment = await appointments.findOne({ _id: tx.appointmentId });
+    const appointment = await appointments.findOne(
+      { _id: tx.appointmentId },
+      { projection: { serviceId: 1, appointmentDate: 1, timeSlot: 1 } }
+    );
     const service = appointment
       ? await services.findOne(
           { _id: appointment.serviceId },

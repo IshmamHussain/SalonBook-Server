@@ -57,9 +57,27 @@ function readBearerToken(authHeader) {
   return match ? match[1] : null;
 }
 
-async function verifyBetterAuthJwt(token) {
+const JWKS_CACHE_TTL_MS = 5 * 60 * 1000;
+let cachedJwks = null;
+let cachedJwksExpiry = 0;
+
+async function loadJwksKeys() {
+  if (cachedJwks && Date.now() < cachedJwksExpiry) {
+    return cachedJwks;
+  }
   const db = getDb();
-  const keys = await db.collection('jwks').find({}).limit(5).toArray();
+  const keys = await db
+    .collection('jwks')
+    .find({}, { projection: { publicKey: 1 } })
+    .limit(5)
+    .toArray();
+  cachedJwks = keys;
+  cachedJwksExpiry = Date.now() + JWKS_CACHE_TTL_MS;
+  return keys;
+}
+
+async function verifyBetterAuthJwt(token) {
+  const keys = await loadJwksKeys();
   for (const keyDoc of keys) {
     try {
       const publicJwk = typeof keyDoc.publicKey === 'string' ? JSON.parse(keyDoc.publicKey) : keyDoc.publicKey;

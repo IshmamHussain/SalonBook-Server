@@ -25,8 +25,8 @@ Backend REST API for **SalonBook**, a role-based salon appointment booking platf
 ## Installation Instructions
 
 ```bash
-git clone <your-server-repo-url>
-cd server
+git clone https://github.com/IshmamHussain/SalonBook-Server.git
+cd SalonBook-Server
 npm install
 ```
 
