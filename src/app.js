@@ -3,8 +3,9 @@ import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import { getAuth } from './config/auth.js';
-import { env } from './config/env.js';
+import { getAuth, initAuth } from './config/auth.js';
+import { connectToDatabase } from './config/db.js';
+import { assertRequiredEnv, env } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import adminRoutes from './routes/admin.routes.js';
 import appointmentsRoutes from './routes/appointments.routes.js';
@@ -13,6 +14,25 @@ import paymentsRoutes, { stripeWebhookHandler } from './routes/payments.routes.j
 import profileRoutes from './routes/profile.routes.js';
 import servicesRoutes from './routes/services.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+
+let initPromise = null;
+let cachedAuthHandler = null;
+
+export async function ensureBackendInitialized() {
+  if (!initPromise) {
+    initPromise = (async () => {
+      assertRequiredEnv();
+      const { client, db } = await connectToDatabase();
+      const auth = initAuth(db, client);
+      cachedAuthHandler = toNodeHandler(auth);
+    })().catch((err) => {
+      initPromise = null;
+      cachedAuthHandler = null;
+      throw err;
+    });
+  }
+  await initPromise;
+}
 
 export function createApp() {
   const app = express();
@@ -43,22 +63,8 @@ export function createApp() {
 
   app.use(compression());
 
-  // 1. Stripe Webhook MUST receive the raw unparsed request body before express.json()
-  app.post(
-    '/api/payments/webhook',
-    express.raw({ type: 'application/json' }),
-    stripeWebhookHandler
-  );
-
-  // 2. Better Auth handler MUST be mounted before express.json()
-  const authHandler = toNodeHandler(getAuth());
-  app.all('/api/auth/*splat', (req, res) => authHandler(req, res));
-
-  // 3. Parse JSON payloads for all remaining REST API endpoints
-  app.use(express.json({ limit: '1mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-
-  app.get(['/', '/api/index.js'], (_req, res) => {
+  // Root & health endpoints respond immediately without waiting for cold-start DB init
+  app.get('/', (_req, res) => {
     res.status(200).json({
       success: true,
       name: 'SalonBook API',
@@ -74,6 +80,33 @@ export function createApp() {
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Lazily initialize MongoDB + Better Auth before any database or auth route
+  app.use(async (_req, _res, next) => {
+    try {
+      await ensureBackendInitialized();
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  // 1. Stripe Webhook MUST receive the raw unparsed request body before express.json()
+  app.post(
+    '/api/payments/webhook',
+    express.raw({ type: 'application/json' }),
+    stripeWebhookHandler
+  );
+
+  // 2. Better Auth handler MUST be mounted before express.json()
+  app.all('/api/auth/*splat', (req, res) => {
+    const authHandler = cachedAuthHandler || toNodeHandler(getAuth());
+    return authHandler(req, res);
+  });
+
+  // 3. Parse JSON payloads for all remaining REST API endpoints
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
   app.use('/api', authTokenRoutes);
   app.use('/api/upload', uploadRoutes);
