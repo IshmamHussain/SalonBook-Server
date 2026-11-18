@@ -35,6 +35,13 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const MAX_SEARCH_LENGTH = 100;
+
+function sanitizeSearchQuery(raw) {
+  if (typeof raw !== 'string') return '';
+  return raw.trim().slice(0, MAX_SEARCH_LENGTH);
+}
+
 // Public: Browse active services with search, category filter, and price sort
 router.get('/services', async (req, res, next) => {
   try {
@@ -43,8 +50,9 @@ router.get('/services', async (req, res, next) => {
 
     const filter = { status: 'active' };
 
-    if (typeof search === 'string' && search.trim()) {
-      filter.serviceName = { $regex: escapeRegex(search.trim()), $options: 'i' };
+    const safeSearch = sanitizeSearchQuery(search);
+    if (safeSearch) {
+      filter.serviceName = { $regex: escapeRegex(safeSearch), $options: 'i' };
     }
 
     if (typeof category === 'string' && category.trim() && category !== 'all') {
@@ -63,6 +71,7 @@ router.get('/services', async (req, res, next) => {
     }
 
     const docs = await cursor.toArray();
+    res.vary('Origin');
     res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
     return res.status(200).json({
       success: true,
@@ -98,6 +107,7 @@ router.get('/services/categories', async (_req, res, next) => {
       minPrice: countMap.get(name)?.minPrice || null,
     }));
 
+    res.vary('Origin');
     res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
     return res.status(200).json({
       success: true,
@@ -153,8 +163,9 @@ router.get('/admin/services', verifyJWT, requireRole('admin'), async (req, res, 
     const { search = '', category = '', status = '', sort = 'newest' } = req.query;
 
     const filter = {};
-    if (typeof search === 'string' && search.trim()) {
-      filter.serviceName = { $regex: escapeRegex(search.trim()), $options: 'i' };
+    const safeSearch = sanitizeSearchQuery(search);
+    if (safeSearch) {
+      filter.serviceName = { $regex: escapeRegex(safeSearch), $options: 'i' };
     }
     if (typeof category === 'string' && category.trim() && category !== 'all') {
       filter.category = category.trim();

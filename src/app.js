@@ -7,6 +7,7 @@ import { getAuth, initAuth } from './config/auth.js';
 import { connectToDatabase } from './config/db.js';
 import { assertRequiredEnv, env } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { createRateLimiter } from './middleware/rateLimit.js';
 import adminRoutes from './routes/admin.routes.js';
 import appointmentsRoutes from './routes/appointments.routes.js';
 import authTokenRoutes from './routes/authToken.routes.js';
@@ -91,6 +92,25 @@ export function createApp() {
     }
   });
 
+  const authLimiter = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 40,
+    methods: ['POST'],
+    message: 'Too many authentication attempts. Please try again in a few minutes.',
+  });
+
+  const uploadLimiter = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    message: 'Upload rate limit reached. Please wait a moment before uploading more images.',
+  });
+
+  const mutationLimiter = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    message: 'Too many booking or checkout requests. Please try again shortly.',
+  });
+
   // 1. Stripe Webhook MUST receive the raw unparsed request body before express.json()
   app.post(
     '/api/payments/webhook',
@@ -99,7 +119,7 @@ export function createApp() {
   );
 
   // 2. Better Auth handler MUST be mounted before express.json()
-  app.all('/api/auth/*splat', (req, res) => {
+  app.all('/api/auth/*splat', authLimiter, (req, res) => {
     const authHandler = cachedAuthHandler || toNodeHandler(getAuth());
     return authHandler(req, res);
   });
@@ -109,8 +129,10 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
   app.use('/api', authTokenRoutes);
-  app.use('/api/upload', uploadRoutes);
+  app.use('/api/upload', uploadLimiter, uploadRoutes);
   app.use('/api', servicesRoutes);
+  app.post('/api/appointments', mutationLimiter);
+  app.post('/api/payments/create-checkout-session', mutationLimiter);
   app.use('/api', appointmentsRoutes);
   app.use('/api/payments', paymentsRoutes);
   app.use('/api', adminRoutes);
