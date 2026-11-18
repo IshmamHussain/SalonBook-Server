@@ -3,13 +3,30 @@ import { initAuth } from './config/auth.js';
 import { closeDatabase, connectToDatabase } from './config/db.js';
 import { assertRequiredEnv, env } from './config/env.js';
 
+let appPromise = null;
+
+export async function getInitializedApp() {
+  if (!appPromise) {
+    appPromise = (async () => {
+      assertRequiredEnv();
+      const { client, db } = await connectToDatabase();
+      initAuth(db, client);
+      return createApp();
+    })().catch((err) => {
+      appPromise = null;
+      throw err;
+    });
+  }
+  return appPromise;
+}
+
+export default async function handler(req, res) {
+  const app = await getInitializedApp();
+  return app(req, res);
+}
+
 async function bootstrap() {
-  assertRequiredEnv();
-
-  const { client, db } = await connectToDatabase();
-  initAuth(db, client);
-
-  const app = createApp();
+  const app = await getInitializedApp();
   const server = app.listen(env.port, () => {
     console.log(`[SalonBook Server] Listening on port ${env.port} (${env.nodeEnv})`);
   });
@@ -26,7 +43,9 @@ async function bootstrap() {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-bootstrap().catch((err) => {
-  console.error('[SalonBook Server] Fatal startup error:', err.message);
-  process.exit(1);
-});
+if (!process.env.VERCEL) {
+  bootstrap().catch((err) => {
+    console.error('[SalonBook Server] Fatal startup error:', err.message);
+    process.exit(1);
+  });
+}
