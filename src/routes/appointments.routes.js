@@ -11,12 +11,33 @@ import {
 
 const router = Router();
 
-function isPastDate(dateStr) {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  return dateStr < `${yyyy}-${mm}-${dd}`;
+function parseSlotTime24(timeSlot) {
+  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(timeSlot.trim());
+  if (!match) return null;
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3].toUpperCase();
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  return { hours, minutes };
+}
+
+function isPastAppointmentSlot(dateStr, timeSlot, timezoneOffsetMinutes) {
+  const parts = dateStr.split('-').map(Number);
+  const parsedTime = parseSlotTime24(timeSlot);
+  if (parts.length !== 3 || !parsedTime) return true;
+
+  const [year, month, day] = parts;
+  const offsetMinutes =
+    typeof timezoneOffsetMinutes === 'number' && Number.isFinite(timezoneOffsetMinutes)
+      ? timezoneOffsetMinutes
+      : 0;
+
+  // Date.prototype.getTimezoneOffset() returns (UTC - local) in minutes
+  const slotUtcMs =
+    Date.UTC(year, month - 1, day, parsedTime.hours, parsedTime.minutes) + offsetMinutes * 60_000;
+
+  return slotUtcMs <= Date.now();
 }
 
 // Protected: Get already booked active time slots for a date so UI can display availability
@@ -61,12 +82,13 @@ router.post(
   validateBody(createAppointmentSchema),
   async (req, res, next) => {
     try {
-      const { serviceId, appointmentDate, timeSlot, message } = req.validatedBody;
+      const { serviceId, appointmentDate, timeSlot, message, timezoneOffsetMinutes } =
+        req.validatedBody;
 
-      if (isPastDate(appointmentDate)) {
+      if (isPastAppointmentSlot(appointmentDate, timeSlot, timezoneOffsetMinutes)) {
         return res.status(400).json({
           success: false,
-          message: 'Appointment date cannot be in the past.',
+          message: 'This appointment date and time slot has already passed. Please choose an upcoming slot.',
         });
       }
 

@@ -43,6 +43,7 @@ export const createAppointmentSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Appointment date must be in YYYY-MM-DD format'),
     timeSlot: z.enum(PREDEFINED_TIME_SLOTS, { errorMap: () => ({ message: 'Please select a valid predefined time slot' }) }),
     message: z.string().trim().max(500, 'Message cannot exceed 500 characters').optional().default(''),
+    timezoneOffsetMinutes: z.number().int().min(-840).max(840).optional(),
   })
   .strict();
 
