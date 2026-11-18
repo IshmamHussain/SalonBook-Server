@@ -23,6 +23,15 @@ router.get('/token', async (req, res, next) => {
         success: false,
         code: 'USER_BLOCKED',
         message: 'Your account has been blocked by the salon administrator.',
+        user: {
+          id: String(userDoc._id),
+          name: userDoc.name || '',
+          email: userDoc.email || '',
+          image: userDoc.image || '',
+          phone: userDoc.phone || '',
+          role: userDoc.role === 'admin' ? 'admin' : 'customer',
+          isBlocked: true,
+        },
       });
     }
 
