@@ -111,26 +111,30 @@ async function seed() {
   console.log(`[Seed] Services checked. Inserted ${insertedServices} new services.`);
 
   // 2. Seed Admin account securely through Better Auth API, then elevate role in MongoDB
-  const existingAdmin = await users.findOne({ email: env.seedAdminEmail.toLowerCase() });
-  if (!existingAdmin) {
-    await auth.api.signUpEmail({
-      body: {
-        name: env.seedAdminName,
-        email: env.seedAdminEmail.toLowerCase(),
-        password: env.seedAdminPassword,
-      },
-    });
-    await users.updateOne(
-      { email: env.seedAdminEmail.toLowerCase() },
-      { $set: { role: 'admin', isBlocked: false } }
-    );
-    console.log(`[Seed] Created Admin account: ${env.seedAdminEmail}`);
+  if (!env.seedAdminEmail || !env.seedAdminPassword) {
+    console.log('[Seed] Skipping admin creation (set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD in .env to seed an admin).');
   } else {
-    await users.updateOne(
-      { _id: existingAdmin._id },
-      { $set: { role: 'admin', isBlocked: false } }
-    );
-    console.log(`[Seed] Verified Admin role for existing account: ${env.seedAdminEmail}`);
+    const existingAdmin = await users.findOne({ email: env.seedAdminEmail.toLowerCase() });
+    if (!existingAdmin) {
+      await auth.api.signUpEmail({
+        body: {
+          name: env.seedAdminName,
+          email: env.seedAdminEmail.toLowerCase(),
+          password: env.seedAdminPassword,
+        },
+      });
+      await users.updateOne(
+        { email: env.seedAdminEmail.toLowerCase() },
+        { $set: { role: 'admin', isBlocked: false } }
+      );
+      console.log(`[Seed] Created Admin account: ${env.seedAdminEmail}`);
+    } else {
+      await users.updateOne(
+        { _id: existingAdmin._id },
+        { $set: { role: 'admin', isBlocked: false } }
+      );
+      console.log(`[Seed] Verified Admin role for existing account: ${env.seedAdminEmail}`);
+    }
   }
 
   await closeDatabase();

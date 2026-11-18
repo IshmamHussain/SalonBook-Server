@@ -28,8 +28,8 @@ export const env = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
   imgbbApiKey: process.env.IMGBB_API_KEY || '',
   seedAdminName: process.env.SEED_ADMIN_NAME || 'SalonBook Admin',
-  seedAdminEmail: process.env.SEED_ADMIN_EMAIL || 'admin@salonbook.com',
-  seedAdminPassword: process.env.SEED_ADMIN_PASSWORD || 'Admin@123',
+  seedAdminEmail: process.env.SEED_ADMIN_EMAIL || '',
+  seedAdminPassword: process.env.SEED_ADMIN_PASSWORD || '',
 };
 
 export function assertRequiredEnv() {
