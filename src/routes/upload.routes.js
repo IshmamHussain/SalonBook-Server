@@ -45,13 +45,13 @@ router.post('/image', upload.single('image'), async (req, res, next) => {
     }
 
     const base64Image = req.file.buffer.toString('base64');
-    const formData = new URLSearchParams();
+    const formData = new FormData();
+    formData.append('key', env.imgbbApiKey);
     formData.append('image', base64Image);
 
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${encodeURIComponent(env.imgbbApiKey)}`, {
+    const response = await fetch('https://api.imgbb.com/1/upload', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData.toString(),
+      body: formData,
     });
 
     const data = await response.json();
