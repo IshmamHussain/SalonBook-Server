@@ -1,8 +1,6 @@
-import { createApp, ensureBackendInitialized } from './app.js';
+import app, { ensureBackendInitialized } from './app.js';
 import { closeDatabase } from './config/db.js';
 import { env } from './config/env.js';
-
-const app = createApp();
 
 if (!process.env.VERCEL) {
   ensureBackendInitialized()
