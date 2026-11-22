@@ -176,7 +176,7 @@ const SEED_SERVICES = [
     price: 120,
     duration: 60,
     image:
-      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=80',
+      'https://i.ibb.co/5hrGrT3d/men-facial.jpg',
     status: 'active',
   },
   {
@@ -187,7 +187,7 @@ const SEED_SERVICES = [
     price: 150,
     duration: 75,
     image:
-      'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=1200&q=80',
+      'https://i.ibb.co/qFcb2yYq/men-massage.jpg',
     status: 'active',
   },
 ];
