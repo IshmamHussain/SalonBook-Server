@@ -135,6 +135,61 @@ const SEED_SERVICES = [
       'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=1200&q=80',
     status: 'active',
   },
+  {
+    serviceName: "Gentlemen's Master Cut & Hot-Towel Beard Sculpt",
+    category: 'Haircut & Styling',
+    description:
+      'Tailored scissor-over-comb master cut, precision neckline taper, straight-razor detailing, and restorative essential oil hot-towel beard treatment.',
+    price: 65,
+    duration: 50,
+    image:
+      'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
+  {
+    serviceName: "Men's Botanical Grey Camo & Natural Blending",
+    category: 'Hair Coloring',
+    description:
+      'Discreet matte demi-permanent color blending to seamlessly soften greys in 15 minutes, preserving natural dimension without warmth or brassiness.',
+    price: 85,
+    duration: 45,
+    image:
+      'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
+  {
+    serviceName: "Men's Scalp Detox & Follicle Rejuvenation Therapy",
+    category: 'Hair Treatment',
+    description:
+      'Clinical scalp exfoliating therapy with tea tree, peppermint micro-exfoliation, high-frequency stimulation, and follicle-fortifying peptide serum.',
+    price: 95,
+    duration: 50,
+    image:
+      'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
+  {
+    serviceName: "Gentlemen's Deep Pore Refining & Charcoal Facial",
+    category: 'Facial & Skincare',
+    description:
+      'Targeted male skin clarifying facial: eucalyptus steam, ultrasonic pore extraction, activated charcoal mask, and cold-pressed antioxidant hydration.',
+    price: 120,
+    duration: 60,
+    image:
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
+  {
+    serviceName: "Men's Deep Tissue & Myofascial Recovery Massage",
+    category: 'Spa & Massage',
+    description:
+      'Intensive full-body pressure work focusing on neck, lower back, and shoulder mobility using arnica massage balm and warm therapeutic compresses.',
+    price: 150,
+    duration: 75,
+    image:
+      'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=1200&q=80',
+    status: 'active',
+  },
 ];
 
 async function seed() {
